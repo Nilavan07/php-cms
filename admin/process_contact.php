@@ -1,13 +1,13 @@
 <?php
 session_start();
-require __DIR__.'/includes/database.php';
-require __DIR__.'/includes/config.php';
-require __DIR__.'/includes/functions.php';
+require __DIR__ . '/includes/database.php';  
+require __DIR__ . '/includes/config.php';
+require __DIR__ . '/includes/functions.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         
-        $required = ['name', 'email', 'message'];
+        $required = ['name','email','message'];
         foreach ($required as $field) {
             if (empty($_POST[$field])) {
                 throw new Exception("Please fill in all required fields");
@@ -15,9 +15,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         
-        $name = htmlspecialchars($_POST['name']);
-        $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
-        $message = htmlspecialchars($_POST['message']);
+        $name    = trim($_POST['name']);
+        $email   = trim($_POST['email']);
+        $message = trim($_POST['message']);
 
         
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -25,11 +25,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         
-        $stmt = $connect->prepare("INSERT INTO messages (name, email, message) VALUES (?, ?, ?)");
-        $stmt->bind_param("sss", $name, $email, $message);
+        $nameEsc    = mysqli_real_escape_string($connect, htmlspecialchars($name));
+        $emailEsc   = mysqli_real_escape_string($connect, htmlspecialchars($email));
+        $messageEsc = mysqli_real_escape_string($connect, htmlspecialchars($message));
+
         
-        if (!$stmt->execute()) {
-            throw new Exception("Database error: " . $stmt->error);
+        $query = "
+            INSERT INTO messages (name, email, message)
+            VALUES (
+                '{$nameEsc}',
+                '{$emailEsc}',
+                '{$messageEsc}'
+            )
+        ";
+        if (! mysqli_query($connect, $query)) {
+            throw new Exception("Database error: " . mysqli_error($connect));
         }
 
         
@@ -37,21 +47,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'type' => 'success',
             'text' => 'Message sent successfully!'
         ];
-        header("Location: ../index.php#contact");
-        exit();
-
     } catch (Exception $e) {
         
         $_SESSION['form_message'] = [
             'type' => 'error',
             'text' => $e->getMessage()
         ];
-        header("Location: ../index.php#contact");
-        exit();
     }
+
+    
+    header("Location: ../index.php#contact");
+    exit();
 }
 
 
 header("Location: ../index.php");
 exit();
-?>

@@ -1,12 +1,14 @@
 <?php
-
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-if (session_status() === PHP_SESSION_NONE) session_start();
-require __DIR__.'/includes/database.php';
-require __DIR__.'/includes/functions.php';
+require __DIR__ . '/includes/database.php';  
+require __DIR__ . '/includes/functions.php';
+
 secure();
 
 
@@ -14,59 +16,121 @@ if (!isset($_GET['id']) || !ctype_digit($_GET['id'])) {
     header("Location: contact.php");
     exit();
 }
-
 $message_id = (int)$_GET['id'];
 
-try {
-    
-    $stmt = $connect->prepare("SELECT * FROM messages WHERE id = ?");
-    $stmt->bind_param('i', $message_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
+$query  = "
+    SELECT *
+      FROM messages
+     WHERE id = $message_id
+     LIMIT 1
+";
+$result = mysqli_query($connect, $query);
 
-    if ($result->num_rows === 0) {
-        throw new Exception("Message not found");
-    }
-
-    $message = $result->fetch_assoc();
-
-} catch(Exception $e) {
-    
-    error_log("View Message Error: " . $e->getMessage());
+if (!$result || mysqli_num_rows($result) === 0) {
+    error_log("View Message Error: message #$message_id not found");
     header("Location: contact.php?error=view_failed");
     exit();
 }
 
-
+$message = mysqli_fetch_assoc($result);
+mysqli_free_result($result);
 ?>
 <!DOCTYPE html>
 <html>
 <head>
     <title>View Message</title>
-    <link rel="stylesheet" href="admin-styles.css">
+    <link rel="stylesheet" href="admin‑styles.css">
+    <style>
+    :root {
+      --primary-color:  #6C63FF;
+      --text-color:     #333;
+      --bg-light:       #f9f9f9;
+      --bg-hover:       #f1f1f1;
+      --border-color:   #e0e0e0;
+      --font-family:    'Poppins', sans-serif;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      font-family: var(--font-family);
+      color: var(--text-color);
+    }
+
+    .container h1 {
+      text-align: center;
+      color: var(--primary-color);
+      margin-bottom: 1rem;
+    }
+
+    .message-details {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 1.5rem;
+    }
+
+    .message-details p {
+      margin: 0.5rem 0;
+      line-height: 1.4;
+    }
+
+    .message-details p strong {
+      display: inline-block;
+      width: 5rem;
+      color: #555;
+    }
+
+    .message-content {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: var(--bg-light);
+      border-radius: 4px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .btn {
+      display: inline-block;
+      background-color: var(--primary-color);
+      color: #fff;
+      text-decoration: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 4px;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+
+    .btn:hover {
+      background-color: #5851c4;
+    }
+    </style>
 </head>
 <body>
     <div class="container">
         <h1>Message Details</h1>
         
-        <?php if(isset($message)): ?>
-            <div class="message-details">
-                <p><strong>From:</strong> <?= htmlspecialchars($message['name'] ?? 'N/A') ?></p>
-                <p><strong>Email:</strong> <?= htmlspecialchars($message['email'] ?? 'N/A') ?></p>
-                <p><strong>Date:</strong> 
-                    <?php if(!empty($message['sent_at'])): ?>
-                        <?= date('F j, Y \a\t H:i', strtotime($message['sent_at'])) ?>
-                    <?php else: ?>
-                        Date not available
-                    <?php endif; ?>
-                </p>
-                <div class="message-content">
-                    <?= nl2br(htmlspecialchars($message['message'] ?? 'No message content')) ?>
-                </div>
+        <div class="message-details">
+            <p><strong>From:</strong>
+                <?= htmlspecialchars($message['name'] ?: 'N/A') ?>
+            </p>
+            <p><strong>Email:</strong>
+                <?= htmlspecialchars($message['email'] ?: 'N/A') ?>
+            </p>
+            <p><strong>Date:</strong>
+                <?php if (!empty($message['sent_at'])): ?>
+                    <?= date('F j, Y \a\t H:i', strtotime($message['sent_at'])) ?>
+                <?php else: ?>
+                    Date not available
+                <?php endif; ?>
+            </p>
+            <div class="message-content">
+                <?= nl2br(htmlspecialchars($message['message'] ?: 'No message content')) ?>
             </div>
-        <?php else: ?>
-            <p class="error">Message not found</p>
-        <?php endif; ?>
+        </div>
         
         <a href="contact.php" class="btn">Back to Messages</a>
     </div>

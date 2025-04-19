@@ -51,7 +51,7 @@ include('includes/header.php');
 <p>Note: For best results, photos should be approximately 800 x 800 pixels.</p>
 
 <?php if(!empty($record['photo'])): ?>
-    <p><img src="data:image/jpeg;base64,<?= base64_encode($record['photo']) ?>" style="max-width: 200px; height: auto;"></p>
+    <p><img src="data:image/jpeg;base64,<?php echo base64_encode($record['photo']); ?>" width="200" height="200"></p>
     <p><a href="projects_photo.php?id=<?php echo $_GET['id']; ?>&delete"><i class="fas fa-trash-alt"></i> Delete this Photo</a></p>
 <?php endif; ?>
 

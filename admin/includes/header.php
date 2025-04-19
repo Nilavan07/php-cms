@@ -96,6 +96,9 @@
         <a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
         <a href="skills.php"><i class="fas fa-code"></i> Skills</a>
         <a href="projects.php"><i class="fas fa-project-diagram"></i> Projects</a>
+        <a href="certificates.php"><i class="fas fa-certificate"></i> Certificates</a>
+        <a href="contact.php"><i class="fas fa-message"></i> Messages</a>
+        <a href="users.php"><i class="fas fa-users"></i> Users</a>
         <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
       </nav>
     <?php endif; ?>
